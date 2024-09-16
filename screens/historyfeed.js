@@ -38,19 +38,22 @@ const HistoryFeed = () => {
   const renderFeedDetails = () => (
     <View style={styles.centeredView}>
       <View style={styles.detailView}>
-        <View style={styles.idContainer}>
-          <Text style={styles.idText}>{selectedFeed.idNum}</Text>
-        </View>
-        <Text style={styles.header}>Feeding & Watering Details</Text>
+        <Text style={styles.header}>Details</Text>
+        
+        {/* Display idNum */}
         <View style={styles.row}>
-          <View style={styles.statusBox}>
-            <Text style={styles.detailTitle}>Feeding Result</Text>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailTitle}>ID</Text>
             <View style={styles.detailBox}>
-              <Text style={styles.detailText}>{selectedFeed.feedingStatus}</Text>
+              <Text style={styles.detailText}>{selectedFeed.idNum}</Text>
             </View>
           </View>
-          <View style={styles.dateBox}>
-            <Text style={styles.detailTitle}>Time</Text>
+        </View>
+  
+        {/* Display a single date (using feedingDate as an example) */}
+        <View style={styles.row}>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailTitle}>Date</Text>
             <View style={styles.detailBox}>
               <Text style={styles.detailText}>
                 {new Date(selectedFeed.feedingDate.seconds * 1000).toLocaleDateString()}
@@ -58,22 +61,44 @@ const HistoryFeed = () => {
             </View>
           </View>
         </View>
+  
+        {/* Display feeding and watering statuses */}
         <View style={styles.row}>
-          <View style={styles.statusBox}>
-            <Text style={styles.detailTitle}>Watering </Text>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailTitle}>Feeding Status</Text>
+            <View style={styles.detailBox}>
+              <Text style={styles.detailText}>{selectedFeed.feedingStatus}</Text>
+            </View>
+          </View>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailTitle}>Watering Status</Text>
             <View style={styles.detailBox}>
               <Text style={styles.detailText}>{selectedFeed.wateringStatus}</Text>
             </View>
           </View>
-          <View style={styles.dateBox}>
-            <Text style={styles.detailTitle}>Time</Text>
+        </View>
+  
+        {/* Display respective times for feeding and watering */}
+        <View style={styles.row}>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailTitle}>Feeding Time</Text>
             <View style={styles.detailBox}>
               <Text style={styles.detailText}>
-                {new Date(selectedFeed.wateringDate.seconds * 1000).toLocaleDateString()}
+                {new Date(selectedFeed.feedingDate.seconds * 1000).toLocaleTimeString()}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailTitle}>Watering Time</Text>
+            <View style={styles.detailBox}>
+              <Text style={styles.detailText}>
+                {new Date(selectedFeed.wateringDate.seconds * 1000).toLocaleTimeString()}
               </Text>
             </View>
           </View>
         </View>
+  
+        {/* Back Button */}
         <TouchableOpacity style={styles.backButton} onPress={goBack}>
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -81,21 +106,47 @@ const HistoryFeed = () => {
     </View>
   );
   
+  const determineCardColor = (feedingStatus, wateringStatus) => {
+    if (feedingStatus === 'Success' && wateringStatus === 'Success') {
+      return '#4CAF50'; // Green for success
+    } else if (feedingStatus === 'Failed' && wateringStatus === 'Failed') {
+      return '#F44336'; // Red for failure
+    } else {
+      return '#FFA500'; // Orange for partial success
+    }
+  };
+
+  const determineStatusText = (feedingStatus, wateringStatus) => {
+    if (feedingStatus === 'Success' && wateringStatus === 'Success') {
+      return 'All Success';
+    } else if (feedingStatus === 'Failed' && wateringStatus === 'Failed') {
+      return 'All Failed';
+    } else {
+      return 'Problem Occurred';
+    }
+  };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.card} onPress={() => handleFeedPress(item)}>
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: determineCardColor(item.feedingStatus, item.wateringStatus) }]}
+      onPress={() => handleFeedPress(item)}
+    >
       <View style={styles.textContainer}>
         <Text style={styles.name}>ID: {item.idNum}</Text>
         <Text style={styles.date}>
           Feeding Date: {item.feedingDate ? new Date(item.feedingDate.seconds * 1000).toLocaleDateString() : ''}
         </Text>
         <Text style={styles.time}>
-          Feeding Status: {item.feedingStatus}
+          Feeding Time: {item.feedingTime}
         </Text>
         <Text style={styles.date}>
           Watering Date: {item.wateringDate ? new Date(item.wateringDate.seconds * 1000).toLocaleDateString() : ''}
         </Text>
         <Text style={styles.time}>
-          Watering Status: {item.wateringStatus}
+          Watering Time: {item.wateringTime}
+        </Text>
+        <Text style={styles.result}>
+          {determineStatusText(item.feedingStatus, item.wateringStatus)}
         </Text>
       </View>
     </TouchableOpacity>
@@ -124,7 +175,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     paddingTop: 40,
-    backgroundColor: '#383838', // Matches the darker theme in App.js
+    backgroundColor: '#383838',
   },
   title: {
     fontSize: 24,
@@ -134,7 +185,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   card: {
-    backgroundColor: '#4B4B4B', // Card color
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
@@ -149,15 +199,21 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF', // White text to stand out on the dark background
+    color: '#FFFFFF',
   },
   date: {
     fontSize: 14,
-    color: '#FFFFFF', // White text to match the overall design
+    color: '#FFFFFF',
   },
   time: {
     fontSize: 14,
-    color: '#FFFFFF', // White text
+    color: '#FFFFFF',
+  },
+  result: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 10,
+    color: '#FFFFFF',
   },
   centeredView: {
     flex: 1,
@@ -167,8 +223,8 @@ const styles = StyleSheet.create({
   },
   detailView: {
     width: '90%',
-    backgroundColor: '#FF7075', // Detailed view card
-    borderRadius: 30,
+    backgroundColor: '#FF7075',
+    borderRadius: 20,
     padding: 30,
     alignItems: 'center',
   },
@@ -176,18 +232,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 20,
+    marginBottom: 10,
     textAlign: 'center',
   },
-  idContainer: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
   idText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    marginBottom: 20,
   },
   row: {
     flexDirection: 'row',
@@ -195,16 +247,12 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 20,
   },
-  dateBox: {
+  detailItem: {
     flex: 1,
-    marginLeft: 10, // Adds spacing between the status and date boxes
-  },
-  statusBox: {
-    flex: 1,
-    marginRight: 10, // Adds spacing between the date and status boxes
+    alignItems: 'center',
   },
   detailTitle: {
-    fontSize: 18, // Increased font size for titles
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 5,
@@ -212,12 +260,13 @@ const styles = StyleSheet.create({
   detailBox: {
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
-    padding: 15, // Increased padding for better spacing
+    padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    width: '90%',
   },
   detailText: {
-    fontSize: 16, // Increased font size for details
+    fontSize: 16,
     color: '#000',
   },
   backButton: {
@@ -235,4 +284,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
 export default HistoryFeed;
