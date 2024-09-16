@@ -132,26 +132,22 @@ const HistoryFeed = () => {
       onPress={() => handleFeedPress(item)}
     >
       <View style={styles.textContainer}>
+        {/* Centered ID */}
         <Text style={styles.name}>ID: {item.idNum}</Text>
+        
+        {/* Centered Date */}
         <Text style={styles.date}>
-          Feeding Date: {item.feedingDate ? new Date(item.feedingDate.seconds * 1000).toLocaleDateString() : ''}
+          Date: {item.feedingDate ? new Date(item.feedingDate.seconds * 1000).toLocaleDateString() : ''}
         </Text>
-        <Text style={styles.time}>
-          Feeding Time: {item.feedingTime}
-        </Text>
-        <Text style={styles.date}>
-          Watering Date: {item.wateringDate ? new Date(item.wateringDate.seconds * 1000).toLocaleDateString() : ''}
-        </Text>
-        <Text style={styles.time}>
-          Watering Time: {item.wateringTime}
-        </Text>
+        
+        {/* Centered Status */}
         <Text style={styles.result}>
           {determineStatusText(item.feedingStatus, item.wateringStatus)}
         </Text>
       </View>
     </TouchableOpacity>
   );
-
+  
   return (
     <View style={styles.container}>
       {selectedFeed ? (
@@ -192,28 +188,36 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
+    justifyContent: 'center',  // Center vertically
+    alignItems: 'center',      // Center horizontally
   },
   textContainer: {
-    marginBottom: 10,
+    alignItems: 'center',
   },
   name: {
-    fontSize: 18,
+    fontSize: 25,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    textAlign: 'center',   // Center text horizontally
+    marginBottom: 5,
   },
   date: {
-    fontSize: 14,
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#FFFFFF',
+    textAlign: 'center',   // Center text horizontally
+    marginBottom: 5,
   },
   time: {
     fontSize: 14,
     color: '#FFFFFF',
   },
   result: {
-    fontSize: 16,
+    fontSize: 25,
     fontWeight: 'bold',
-    marginTop: 10,
     color: '#FFFFFF',
+    textAlign: 'center',   // Center text horizontally
+    marginTop: 10,
   },
   centeredView: {
     flex: 1,

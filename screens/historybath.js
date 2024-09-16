@@ -3,74 +3,88 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react
 import { db } from '../firebase'; // Import Firestore
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 
-const HistoryClean = () => {
-  const [reports, setReports] = useState([]);
-  const [selectedReport, setSelectedReport] = useState(null);
+const HistoryBath = () => {
+  const [baths, setBaths] = useState([]);
+  const [selectedBath, setSelectedBath] = useState(null);
 
-  // Function to fetch reports from Firestore
-  const fetchReports = async () => {
+  // Function to fetch bath history from Firestore
+  const fetchBaths = async () => {
     try {
-      const q = query(collection(db, 'reports'), orderBy('id', 'desc'));
+      const q = query(collection(db, 'historybath'), orderBy('bathingDate', 'desc'));
       const querySnapshot = await getDocs(q);
-      const fetchedReports = [];
+      const fetchedBaths = [];
       querySnapshot.forEach((doc) => {
-        fetchedReports.push({ id: doc.id, ...doc.data() });
+        fetchedBaths.push({ id: doc.id, ...doc.data() });
       });
-      setReports(fetchedReports);
+      setBaths(fetchedBaths);
     } catch (error) {
-      console.error('Error fetching reports:', error);
-      Alert.alert('Error', 'Failed to fetch reports.');
+      console.error('Error fetching bath history:', error);
+      Alert.alert('Error', 'Failed to fetch bath history.');
     }
   };
 
   useEffect(() => {
-    fetchReports();
+    fetchBaths();
   }, []);
 
-  const handleReportPress = (report) => {
-    setSelectedReport(report);
+  const handleBathPress = (bath) => {
+    setSelectedBath(bath);
   };
 
   const goBack = () => {
-    setSelectedReport(null);
+    setSelectedBath(null);
   };
 
-  const renderReportDetails = () => (
+  const renderBathDetails = () => (
     <View style={styles.centeredView}>
       <View style={styles.detailView}>
-        <Text style={styles.header}>Feeding History</Text>
+        <Text style={styles.header}>Details</Text>
+
+        {/* Display idNum */}
         <View style={styles.row}>
           <View style={styles.detailItem}>
             <Text style={styles.detailTitle}>ID</Text>
             <View style={styles.detailBox}>
-              <Text style={styles.detailText}>{selectedReport.id}</Text>
+              <Text style={styles.detailText}>{selectedBath.idNum}</Text>
             </View>
           </View>
+        </View>
+
+        {/* Display a single date (using bathingDate) */}
+        <View style={styles.row}>
           <View style={styles.detailItem}>
             <Text style={styles.detailTitle}>Date</Text>
             <View style={styles.detailBox}>
               <Text style={styles.detailText}>
-                {new Date(selectedReport.date.seconds * 1000).toLocaleDateString()}
+                {new Date(selectedBath.bathingDate.seconds * 1000).toLocaleDateString()}
               </Text>
             </View>
           </View>
         </View>
+
+        {/* Display bathing status */}
         <View style={styles.row}>
           <View style={styles.detailItem}>
-            <Text style={styles.detailTitle}>Feeding Result</Text>
+            <Text style={styles.detailTitle}>Bathing Status</Text>
             <View style={styles.detailBox}>
-              <Text style={styles.detailText}>{selectedReport.status}</Text>
+              <Text style={styles.detailText}>{selectedBath.bathingStatus}</Text>
             </View>
           </View>
+        </View>
+
+        {/* Display respective times for bathing */}
+        <View style={styles.row}>
           <View style={styles.detailItem}>
-            <Text style={styles.detailTitle}>Time</Text>
+            <Text style={styles.detailTitle}>Bathing Time</Text>
             <View style={styles.detailBox}>
               <Text style={styles.detailText}>
-                {selectedReport.date ? new Date(selectedReport.date.seconds * 1000).toLocaleTimeString() : 'N/A'}
+                {new Date(selectedBath.bathingDate.seconds * 1000).toLocaleTimeString()}
               </Text>
             </View>
           </View>
         </View>
+
+        {/* Back Button */}
         <TouchableOpacity style={styles.backButton} onPress={goBack}>
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -78,18 +92,22 @@ const HistoryClean = () => {
     </View>
   );
 
+  const determineCardColor = (bathingStatus) => {
+    return bathingStatus === 'Success' ? '#4CAF50' : '#F44336'; // Green for success, Red for failure
+  };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.card} onPress={() => handleReportPress(item)}>
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: determineCardColor(item.bathingStatus) }]}
+      onPress={() => handleBathPress(item)}
+    >
       <View style={styles.textContainer}>
-        <Text style={styles.name}>ID: {item.id}</Text>
+        <Text style={styles.name}>ID: {item.idNum}</Text>
         <Text style={styles.date}>
-          Date: {item.date ? new Date(item.date.seconds * 1000).toLocaleDateString() : ''}
+          Date: {item.bathingDate ? new Date(item.bathingDate.seconds * 1000).toLocaleDateString() : ''}
         </Text>
-        <Text style={styles.time}>
-          Time: {item.date ? new Date(item.date.seconds * 1000).toLocaleTimeString() : ''}
-        </Text>
-        <Text style={[styles.status, item.status === 'Failed' ? styles.statusFailed : styles.statusSuccess]}>
-          Status: {item.status}
+        <Text style={styles.result}>
+          Status: {item.bathingStatus}
         </Text>
       </View>
     </TouchableOpacity>
@@ -97,13 +115,13 @@ const HistoryClean = () => {
 
   return (
     <View style={styles.container}>
-      {selectedReport ? (
-        renderReportDetails()
+      {selectedBath ? (
+        renderBathDetails()
       ) : (
         <>
-          <Text style={styles.title}>Feeding & Watering History</Text>
+          <Text style={styles.title}>Bathing History</Text>
           <FlatList
-            data={reports}
+            data={baths}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
           />
@@ -118,7 +136,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     paddingTop: 40,
-    backgroundColor: '#383838', // Matches the darker theme in App.js
+    backgroundColor: '#383838',
   },
   title: {
     fontSize: 24,
@@ -128,7 +146,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   card: {
-    backgroundColor: '#4B4B4B', // Dark gray to match the app's overall theme
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
@@ -136,33 +153,29 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   textContainer: {
-    marginBottom: 10,
+    alignItems: 'center',
   },
   name: {
-    fontSize: 18,
+    fontSize: 25,
     fontWeight: 'bold',
-    color: '#FFFFFF', // White text to stand out on the dark background
+    color: '#FFFFFF',
+    marginBottom: 5,
   },
   date: {
-    fontSize: 14,
-    color: '#FFFFFF', // White text to match the overall design
-  },
-  time: {
-    fontSize: 14,
-    color: '#FFFFFF', // White text
-  },
-  status: {
-    fontSize: 16,
-    marginTop: 10,
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 5,
   },
-  statusSuccess: {
-    color: '#2ECC71', // Green for Success
-  },
-  statusFailed: {
-    color: '#FF6F61', // Accent color used for Failed
+  result: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginTop: 10,
   },
   centeredView: {
     flex: 1,
@@ -172,7 +185,7 @@ const styles = StyleSheet.create({
   },
   detailView: {
     width: '90%',
-    backgroundColor: '#FF7075', // Keep this for detailed views
+    backgroundColor: '#FF7075',
     borderRadius: 20,
     padding: 30,
     alignItems: 'center',
@@ -181,12 +194,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 30,
+    marginBottom: 20,
     textAlign: 'center',
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     width: '100%',
     marginBottom: 20,
   },
@@ -206,7 +219,7 @@ const styles = StyleSheet.create({
     padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '90%',
+    width: '80%',
   },
   detailText: {
     fontSize: 16,
@@ -227,4 +240,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-export default HistoryClean;
+
+export default HistoryBath;

@@ -4,98 +4,110 @@ import { db } from '../firebase'; // Import Firestore
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 
 const HistoryClean = () => {
-  const [historyFeeds, setHistoryFeeds] = useState([]);
-  const [selectedFeed, setSelectedFeed] = useState(null);
+  const [historyCleans, setHistoryCleans] = useState([]);
+  const [selectedClean, setSelectedClean] = useState(null);
 
-  // Function to fetch history feeds from Firestore
-  const fetchHistoryFeeds = async () => {
+  // Function to fetch history cleans from Firestore
+  const fetchHistoryCleans = async () => {
     try {
-      const q = query(collection(db, 'historyfeed'), orderBy('feedingDate', 'desc'));
+      const q = query(collection(db, 'historyclean'), orderBy('cleaningDate', 'desc'));
       const querySnapshot = await getDocs(q);
-      const fetchedFeeds = [];
+      const fetchedCleans = [];
       querySnapshot.forEach((doc) => {
-        fetchedFeeds.push({ id: doc.id, ...doc.data() });
+        fetchedCleans.push({ id: doc.id, ...doc.data() });
       });
-      setHistoryFeeds(fetchedFeeds);
+      setHistoryCleans(fetchedCleans);
     } catch (error) {
-      console.error('Error fetching history feeds:', error);
-      Alert.alert('Error', 'Failed to fetch history feeds.');
+      console.error('Error fetching cleaning history:', error);
+      Alert.alert('Error', 'Failed to fetch cleaning history.');
     }
   };
 
   useEffect(() => {
-    fetchHistoryFeeds();
+    fetchHistoryCleans();
   }, []);
 
-  const handleFeedPress = (feed) => {
-    setSelectedFeed(feed);
+  const handleCleanPress = (clean) => {
+    setSelectedClean(clean);
   };
 
   const goBack = () => {
-    setSelectedFeed(null);
+    setSelectedClean(null);
   };
 
-  const renderFeedDetails = () => (
+  const renderCleanDetails = () => (
     <View style={styles.centeredView}>
       <View style={styles.detailView}>
-        <View style={styles.idContainer}>
-          <Text style={styles.idText}>{selectedFeed.idNum}</Text>
-        </View>
-        <Text style={styles.header}>Feeding & Watering Details</Text>
+        <Text style={styles.header}>Details</Text>
+
+        {/* Display idNum */}
         <View style={styles.row}>
-          <View style={styles.statusBox}>
-            <Text style={styles.detailTitle}>Feeding Result</Text>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailTitle}>ID</Text>
             <View style={styles.detailBox}>
-              <Text style={styles.detailText}>{selectedFeed.feedingStatus}</Text>
+              <Text style={styles.detailText}>{selectedClean.idNum}</Text>
             </View>
           </View>
-          <View style={styles.dateBox}>
-            <Text style={styles.detailTitle}>Time</Text>
+        </View>
+
+        {/* Display a single date (using cleaningDate) */}
+        <View style={styles.row}>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailTitle}>Date</Text>
             <View style={styles.detailBox}>
               <Text style={styles.detailText}>
-                {new Date(selectedFeed.feedingDate.seconds * 1000).toLocaleDateString()}
+                {new Date(selectedClean.cleaningDate.seconds * 1000).toLocaleDateString()}
               </Text>
             </View>
           </View>
         </View>
+
+        {/* Display cleaning status */}
         <View style={styles.row}>
-          <View style={styles.statusBox}>
-            <Text style={styles.detailTitle}>Watering Result</Text>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailTitle}>Cleaning Status</Text>
             <View style={styles.detailBox}>
-              <Text style={styles.detailText}>{selectedFeed.wateringStatus}</Text>
+              <Text style={styles.detailText}>{selectedClean.cleaningStatus}</Text>
             </View>
           </View>
-          <View style={styles.dateBox}>
-            <Text style={styles.detailTitle}>Time</Text>
+        </View>
+
+        {/* Display respective times for cleaning */}
+        <View style={styles.row}>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailTitle}>Cleaning Time</Text>
             <View style={styles.detailBox}>
               <Text style={styles.detailText}>
-                {new Date(selectedFeed.wateringDate.seconds * 1000).toLocaleDateString()}
+                {new Date(selectedClean.cleaningDate.seconds * 1000).toLocaleTimeString()}
               </Text>
             </View>
           </View>
         </View>
+
+        {/* Back Button */}
         <TouchableOpacity style={styles.backButton} onPress={goBack}>
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-  
+
+  const determineCardColor = (cleaningStatus) => {
+    return cleaningStatus === 'Success' ? '#4CAF50' : '#F44336'; // Green for success, Red for failure
+  };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.card} onPress={() => handleFeedPress(item)}>
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: determineCardColor(item.cleaningStatus) }]}
+      onPress={() => handleCleanPress(item)}
+    >
       <View style={styles.textContainer}>
         <Text style={styles.name}>ID: {item.idNum}</Text>
         <Text style={styles.date}>
-          Feeding Date: {item.feedingDate ? new Date(item.feedingDate.seconds * 1000).toLocaleDateString() : ''}
+          Date: {item.cleaningDate ? new Date(item.cleaningDate.seconds * 1000).toLocaleDateString() : ''}
         </Text>
-        <Text style={styles.time}>
-          Feeding Status: {item.feedingStatus}
-        </Text>
-        <Text style={styles.date}>
-          Watering Date: {item.wateringDate ? new Date(item.wateringDate.seconds * 1000).toLocaleDateString() : ''}
-        </Text>
-        <Text style={styles.time}>
-          Watering Status: {item.wateringStatus}
+        <Text style={styles.result}>
+          Status: {item.cleaningStatus}
         </Text>
       </View>
     </TouchableOpacity>
@@ -103,13 +115,13 @@ const HistoryClean = () => {
 
   return (
     <View style={styles.container}>
-      {selectedFeed ? (
-        renderFeedDetails()
+      {selectedClean ? (
+        renderCleanDetails()
       ) : (
         <>
-          <Text style={styles.title}>Feeding & Watering History</Text>
+          <Text style={styles.title}>Cleaning History</Text>
           <FlatList
-            data={historyFeeds}
+            data={historyCleans}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
           />
@@ -124,7 +136,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     paddingTop: 40,
-    backgroundColor: '#383838', // Matches the darker theme in App.js
+    backgroundColor: '#383838',
   },
   title: {
     fontSize: 24,
@@ -134,7 +146,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   card: {
-    backgroundColor: '#4B4B4B', // Card color
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
@@ -142,22 +153,29 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   textContainer: {
-    marginBottom: 10,
+    alignItems: 'center',
   },
   name: {
-    fontSize: 18,
+    fontSize: 25,
     fontWeight: 'bold',
-    color: '#FFFFFF', // White text to stand out on the dark background
+    color: '#FFFFFF',
+    marginBottom: 5,
   },
   date: {
-    fontSize: 14,
-    color: '#FFFFFF', // White text to match the overall design
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 5,
   },
-  time: {
-    fontSize: 14,
-    color: '#FFFFFF', // White text
+  result: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginTop: 10,
   },
   centeredView: {
     flex: 1,
@@ -167,8 +185,8 @@ const styles = StyleSheet.create({
   },
   detailView: {
     width: '90%',
-    backgroundColor: '#FF7075', // Detailed view card
-    borderRadius: 30,
+    backgroundColor: '#FF7075',
+    borderRadius: 20,
     padding: 30,
     alignItems: 'center',
   },
@@ -176,18 +194,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 20,
+    marginBottom: 10,
     textAlign: 'center',
-  },
-  idContainer: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  idText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
   },
   row: {
     flexDirection: 'row',
@@ -195,16 +203,12 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 20,
   },
-  dateBox: {
+  detailItem: {
     flex: 1,
-    marginLeft: 10, // Adds spacing between the status and date boxes
-  },
-  statusBox: {
-    flex: 1,
-    marginRight: 10, // Adds spacing between the date and status boxes
+    alignItems: 'center',
   },
   detailTitle: {
-    fontSize: 18, // Increased font size for titles
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 5,
@@ -212,12 +216,13 @@ const styles = StyleSheet.create({
   detailBox: {
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
-    padding: 15, // Increased padding for better spacing
+    padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    width: '90%',
   },
   detailText: {
-    fontSize: 16, // Increased font size for details
+    fontSize: 16,
     color: '#000',
   },
   backButton: {
@@ -235,4 +240,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
 export default HistoryClean;

@@ -42,7 +42,7 @@ const HomeScreen = () => {
 
         <TouchableOpacity 
           style={styles.button}
-          onPress={() => navigation.navigate('Cleaning')} // Change navigation route if needed
+          onPress={() => navigation.navigate('Clean')} // Change navigation route if needed
         >
           {/* Changed the cleaning icon */}
           <Icon name="sparkles-outline" size={30} color="#fff" />
